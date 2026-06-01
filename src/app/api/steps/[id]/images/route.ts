@@ -40,15 +40,20 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     return NextResponse.json({ error: "Image must be under 10MB" }, { status: 400 });
   }
 
-  const blob = await put(`steps/${stepId}/${Date.now()}-${file.name}`, file, {
-    access: "public",
-  });
+  try {
+    const blob = await put(`steps/${stepId}/${Date.now()}-${file.name}`, file, {
+      access: "public",
+    });
 
-  const image = await prisma.stepImage.create({
-    data: { stepId, url: blob.url, name: file.name },
-  });
+    const image = await prisma.stepImage.create({
+      data: { stepId, url: blob.url, name: file.name },
+    });
 
-  return NextResponse.json(image, { status: 201 });
+    return NextResponse.json(image, { status: 201 });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }
 
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
