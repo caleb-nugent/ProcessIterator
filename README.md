@@ -1,36 +1,56 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ProcessIterator
 
-## Getting Started
+SOP (Standard Operating Procedure) builder with live step timing, AI outline generation, and team sharing.
 
-First, run the development server:
+## Setup
 
+### 1. Install dependencies
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Configure environment
+Copy `.env.example` to `.env` and fill in your values:
+```bash
+cp .env.example .env
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Required variables:
+- `DATABASE_URL` — PostgreSQL connection string (e.g. `postgresql://user:pass@localhost:5432/process_iterator`)
+- `NEXTAUTH_SECRET` — Random secret: `openssl rand -base64 32`
+- `NEXTAUTH_URL` — `http://localhost:3000` for local dev
+- `ANTHROPIC_API_KEY` — Add when ready to enable AI outline generation
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 3. Set up the database
+```bash
+npm run db:migrate    # Apply migrations (creates tables)
+# OR for quick prototyping without migrations:
+npm run db:push       # Push schema directly
+```
 
-## Learn More
+### 4. Run
+```bash
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+Open [http://localhost:3000](http://localhost:3000) — you'll land on the login page. Create an account to get started.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Features
 
-## Deploy on Vercel
+- **Folder organization** — Group processes into color-coded folders
+- **Manual process creation** — Build SOPs step by step
+- **AI outline generation** — Describe a process, get a draft outline (requires `ANTHROPIC_API_KEY`)
+- **Step timing** — Live start/stop timer per step, or log duration manually (`45m`, `1h 30m`, `90s`)
+- **Run history** — Every step tracks a timestamped history of timed runs with optional notes
+- **Team sharing** — Share processes with colleagues (view or edit permission)
+- **Stats** — Average duration per step, total runs, estimated total process time
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Tech Stack
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Next.js 14** (App Router)
+- **Prisma** + **PostgreSQL**
+- **NextAuth.js** (credentials auth)
+- **Tailwind CSS**
+- **Anthropic SDK** (AI outline generation)
