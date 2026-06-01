@@ -59,14 +59,16 @@ export function StepItem({ step, index, canEdit, onUpdated, onDeleted, dragHandl
     formData.append("file", file);
     try {
       const res = await fetch(`/api/steps/${step.id}/images`, { method: "POST", body: formData });
-      const data = await res.json();
+      const text = await res.text();
+      let data: { error?: string } = {};
+      try { data = JSON.parse(text); } catch { /* non-JSON response */ }
       if (res.ok) {
-        onUpdated({ ...step, images: [...step.images, data] });
+        onUpdated({ ...step, images: [...step.images, data as never] });
       } else {
-        setUploadError(data.error ?? `Upload failed (${res.status})`);
+        setUploadError(data.error ?? `Upload failed (${res.status}): ${text.slice(0, 120)}`);
       }
     } catch (err) {
-      setUploadError("Network error — please try again");
+      setUploadError(`Fetch error: ${err instanceof Error ? err.message : String(err)}`);
     }
     setUploading(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
