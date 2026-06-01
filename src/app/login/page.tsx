@@ -63,6 +63,9 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              autoComplete="email"
+              autoCapitalize="none"
+              autoCorrect="off"
               className="w-full px-4 py-3 rounded border text-sm outline-none transition-colors"
               style={{
                 background: "white",
@@ -82,6 +85,10 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              autoComplete="current-password"
+              autoCorrect="off"
+              autoCapitalize="none"
+              spellCheck={false}
               className="w-full px-4 py-3 rounded border text-sm outline-none"
               style={{
                 background: "white",
