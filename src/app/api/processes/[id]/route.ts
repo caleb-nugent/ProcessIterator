@@ -28,7 +28,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     include: {
       steps: {
         orderBy: { order: "asc" },
-        include: { runs: { orderBy: { completedAt: "desc" } } },
+        include: {
+          runs: { orderBy: { completedAt: "desc" } },
+          images: { orderBy: { createdAt: "asc" } },
+        },
       },
       folder: { select: { id: true, name: true, color: true } },
       shares: {

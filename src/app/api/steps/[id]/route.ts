@@ -35,7 +35,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       ...(title !== undefined && { title }),
       ...(description !== undefined && { description }),
     },
-    include: { runs: { orderBy: { completedAt: "desc" } } },
+    include: {
+      runs: { orderBy: { completedAt: "desc" } },
+      images: { orderBy: { createdAt: "asc" } },
+    },
   });
 
   return NextResponse.json(step);

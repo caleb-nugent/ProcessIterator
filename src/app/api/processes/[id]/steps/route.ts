@@ -33,7 +33,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   const step = await prisma.step.create({
     data: { processId, title, description: description ?? null, order: count },
-    include: { runs: true },
+    include: { runs: true, images: true },
   });
 
   await prisma.process.update({ where: { id: processId }, data: { updatedAt: new Date() } });

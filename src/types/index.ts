@@ -25,6 +25,14 @@ export interface ProcessWithCounts {
   folder?: { id: string; name: string; color: string } | null;
 }
 
+export interface StepImage {
+  id: string;
+  stepId: string;
+  url: string;
+  name: string;
+  createdAt: string;
+}
+
 export interface StepWithRuns {
   id: string;
   processId: string;
@@ -32,6 +40,7 @@ export interface StepWithRuns {
   description: string | null;
   order: number;
   runs: StepRun[];
+  images: StepImage[];
 }
 
 export interface StepRun {
