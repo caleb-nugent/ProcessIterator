@@ -78,8 +78,8 @@ export function NewProcessModal({ folders, defaultFolderId, onClose, onCreated }
 
   if (mode === "choose") {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.4)" }}>
-        <div className="w-full max-w-md rounded-lg shadow-xl p-6" style={{ background: "white" }}>
+      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4" style={{ background: "rgba(0,0,0,0.4)" }}>
+        <div className="w-full sm:max-w-md rounded-t-2xl sm:rounded-lg shadow-xl p-6" style={{ background: "white" }}>
           <div className="flex items-center justify-between mb-6">
             <h2 className="font-bold text-xl" style={{ color: "var(--black)" }}>New Process</h2>
             <button onClick={onClose} style={{ color: "var(--gray)" }}><X size={18} /></button>
@@ -120,8 +120,8 @@ export function NewProcessModal({ folders, defaultFolderId, onClose, onCreated }
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.4)" }}>
-      <div className="w-full max-w-lg rounded-lg shadow-xl" style={{ background: "white" }}>
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4" style={{ background: "rgba(0,0,0,0.4)" }}>
+      <div className="w-full sm:max-w-lg rounded-t-2xl sm:rounded-lg shadow-xl" style={{ background: "white" }}>
         <div className="flex items-center justify-between p-6 border-b" style={{ borderColor: "var(--border)" }}>
           <div className="flex items-center gap-2">
             {mode === "ai" ? <Sparkles size={16} style={{ color: "var(--orange)" }} /> : <PenLine size={16} />}

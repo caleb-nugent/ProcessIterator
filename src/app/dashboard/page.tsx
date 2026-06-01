@@ -74,7 +74,7 @@ function DashboardContent() {
   }
 
   return (
-    <div className="h-screen flex overflow-hidden" style={{ background: "var(--cream)" }}>
+    <div className="h-screen md:flex md:overflow-hidden" style={{ background: "var(--cream)" }}>
       <Sidebar
         folders={folders}
         onFolderCreated={(f) => setFolders((prev) => [...prev, f])}
@@ -82,30 +82,31 @@ function DashboardContent() {
         totalProcesses={totalProcesses}
       />
 
-      <main className="flex-1 overflow-y-auto">
-        <div className="max-w-4xl mx-auto px-8 py-8">
+      <main className="flex-1 overflow-y-auto pt-14 md:pt-0">
+        <div className="max-w-4xl mx-auto px-4 md:px-8 py-6 md:py-8">
           {/* Header */}
-          <div className="flex items-start justify-between mb-8">
+          <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-2xl font-bold" style={{ color: "var(--black)" }}>
+              <h1 className="text-xl md:text-2xl font-bold" style={{ color: "var(--black)" }}>
                 {currentFolder ? currentFolder.name : selectedFolderId === "null" ? "Uncategorized" : "All Processes"}
               </h1>
-              <p className="text-sm mt-1" style={{ color: "var(--gray)" }}>
+              <p className="text-sm mt-0.5 hidden md:block" style={{ color: "var(--gray)" }}>
                 {session?.user?.name ? `Welcome back, ${session.user.name}` : "Build and iterate your SOPs"}
               </p>
             </div>
             <button
               onClick={() => setShowNewProcess(true)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded font-semibold text-sm transition-colors"
+              className="flex items-center gap-2 px-3 md:px-4 py-2 md:py-2.5 rounded font-semibold text-sm transition-colors"
               style={{ background: "var(--black)", color: "white" }}
             >
               <Plus size={16} />
-              New Process
+              <span className="hidden sm:inline">New Process</span>
+              <span className="sm:hidden">New</span>
             </button>
           </div>
 
           {/* Search */}
-          <div className="relative mb-6">
+          <div className="relative mb-5">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--gray)" }} />
             <input
               value={search}
@@ -122,7 +123,7 @@ function DashboardContent() {
             <>
               {/* Own processes */}
               {filtered.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 mb-8">
                   {filtered.map((p) => (
                     <ProcessCard key={p.id} process={p} />
                   ))}

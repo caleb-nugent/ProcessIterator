@@ -34,7 +34,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--cream)" }}>
+    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: "var(--cream)" }}>
       <div className="w-full max-w-md">
         <div className="mb-10">
           <div className="flex items-center gap-2 mb-8">

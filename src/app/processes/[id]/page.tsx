@@ -155,14 +155,14 @@ export default function ProcessPage({ params }: { params: Promise<{ id: string }
     <div className="min-h-screen" style={{ background: "var(--cream)" }}>
       {/* Top bar */}
       <div className="sticky top-0 z-10 border-b" style={{ background: "var(--cream)", borderColor: "var(--border)" }}>
-        <div className="max-w-3xl mx-auto px-6 py-3 flex items-center justify-between gap-4">
+        <div className="max-w-3xl mx-auto px-4 md:px-6 py-3 flex items-center justify-between gap-4">
           <Link
             href="/dashboard"
             className="flex items-center gap-1.5 text-sm transition-colors"
             style={{ color: "var(--gray)" }}
           >
             <ArrowLeft size={15} />
-            Dashboard
+            <span className="hidden sm:inline">Dashboard</span>
           </Link>
 
           <div className="flex items-center gap-2">
@@ -173,7 +173,7 @@ export default function ProcessPage({ params }: { params: Promise<{ id: string }
                 style={{ borderColor: "var(--border)", color: "var(--gray)" }}
               >
                 <Share2 size={13} />
-                Share
+                <span className="hidden sm:inline">Share</span>
               </button>
             )}
             {isOwner && (
@@ -189,7 +189,7 @@ export default function ProcessPage({ params }: { params: Promise<{ id: string }
         </div>
       </div>
 
-      <div className="max-w-3xl mx-auto px-6 py-8">
+      <div className="max-w-3xl mx-auto px-4 md:px-6 py-6 md:py-8">
         {/* Process header */}
         <div className="mb-8">
           {process.folder && (
@@ -206,7 +206,7 @@ export default function ProcessPage({ params }: { params: Promise<{ id: string }
                 value={titleInput}
                 onChange={(e) => setTitleInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") saveTitle(); if (e.key === "Escape") setEditingTitle(false); }}
-                className="flex-1 text-2xl font-bold px-2 py-1 rounded border outline-none"
+                className="flex-1 text-xl md:text-2xl font-bold px-2 py-1 rounded border outline-none"
                 style={{ borderColor: "var(--orange)", color: "var(--black)" }}
               />
               <button onClick={saveTitle} className="p-1.5 rounded" style={{ background: "var(--black)", color: "white" }}>
@@ -218,7 +218,7 @@ export default function ProcessPage({ params }: { params: Promise<{ id: string }
             </div>
           ) : (
             <div className="flex items-start gap-2 group mb-2">
-              <h1 className="text-2xl font-bold leading-tight" style={{ color: "var(--black)" }}>{process.title}</h1>
+              <h1 className="text-xl md:text-2xl font-bold leading-tight" style={{ color: "var(--black)" }}>{process.title}</h1>
               {canEdit && (
                 <button
                   onClick={() => setEditingTitle(true)}

@@ -56,8 +56,11 @@ export function ShareModal({ process, onClose, onUpdated }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.4)" }}>
-      <div className="w-full max-w-md rounded-lg shadow-xl" style={{ background: "white" }}>
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4" style={{ background: "rgba(0,0,0,0.4)" }}>
+      <div className="w-full sm:max-w-md rounded-t-2xl sm:rounded-lg shadow-xl" style={{ background: "white" }}>
+        <div className="sm:hidden flex justify-center pt-3 pb-1">
+          <div className="w-10 h-1 rounded-full" style={{ background: "var(--border)" }} />
+        </div>
         <div className="flex items-center justify-between p-6 border-b" style={{ borderColor: "var(--border)" }}>
           <h2 className="font-bold text-lg" style={{ color: "var(--black)" }}>Share Process</h2>
           <button onClick={onClose} style={{ color: "var(--gray)" }}><X size={18} /></button>
@@ -66,33 +69,35 @@ export function ShareModal({ process, onClose, onUpdated }: Props) {
         <div className="p-6 space-y-5">
           <form onSubmit={handleShare} className="space-y-3">
             {error && <p className="text-sm" style={{ color: "#DC2626" }}>{error}</p>}
-            <div className="flex gap-2">
+            <div className="space-y-2">
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="flex-1 px-3 py-2 rounded border text-sm outline-none"
+                className="w-full px-3 py-2.5 rounded border text-sm outline-none"
                 style={{ borderColor: "var(--border)", color: "var(--black)" }}
                 placeholder="colleague@example.com"
               />
-              <select
-                value={permission}
-                onChange={(e) => setPermission(e.target.value)}
-                className="px-2 py-2 rounded border text-sm outline-none"
-                style={{ borderColor: "var(--border)", color: "var(--black)", background: "white" }}
-              >
-                <option value="view">View</option>
-                <option value="edit">Edit</option>
-              </select>
-              <button
-                type="submit"
-                disabled={loading || !email.trim()}
-                className="flex items-center gap-1.5 px-3 py-2 rounded text-sm font-semibold disabled:opacity-60"
-                style={{ background: "var(--black)", color: "white" }}
-              >
-                <UserPlus size={14} />
-                Share
-              </button>
+              <div className="flex gap-2">
+                <select
+                  value={permission}
+                  onChange={(e) => setPermission(e.target.value)}
+                  className="flex-1 px-3 py-2.5 rounded border text-sm outline-none"
+                  style={{ borderColor: "var(--border)", color: "var(--black)", background: "white" }}
+                >
+                  <option value="view">Can view</option>
+                  <option value="edit">Can edit</option>
+                </select>
+                <button
+                  type="submit"
+                  disabled={loading || !email.trim()}
+                  className="flex items-center gap-1.5 px-4 py-2.5 rounded text-sm font-semibold disabled:opacity-60"
+                  style={{ background: "var(--black)", color: "white" }}
+                >
+                  <UserPlus size={14} />
+                  Share
+                </button>
+              </div>
             </div>
           </form>
 

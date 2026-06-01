@@ -38,8 +38,8 @@ export function NewFolderModal({ onClose, onCreated }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.4)" }}>
-      <div className="w-full max-w-sm rounded-lg shadow-xl p-6" style={{ background: "white" }}>
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4" style={{ background: "rgba(0,0,0,0.4)" }}>
+      <div className="w-full sm:max-w-sm rounded-t-2xl sm:rounded-lg shadow-xl p-6" style={{ background: "white" }}>
         <div className="flex items-center justify-between mb-5">
           <h2 className="font-bold text-lg" style={{ color: "var(--black)" }}>New Folder</h2>
           <button onClick={onClose} style={{ color: "var(--gray)" }}>
