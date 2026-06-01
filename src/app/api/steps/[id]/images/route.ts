@@ -4,6 +4,10 @@ import { put, del } from "@vercel/blob";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
+export const config = {
+  api: { bodyParser: false },
+};
+
 async function canAccess(stepId: string) {
   const session = await getServerSession(authOptions);
   if (!session?.user) return null;

@@ -24,6 +24,7 @@ export function StepItem({ step, index, canEdit, onUpdated, onDeleted, dragHandl
   const [editDesc, setEditDesc] = useState(step.description ?? "");
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
   const [lightbox, setLightbox] = useState<StepImage | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -53,12 +54,19 @@ export function StepItem({ step, index, canEdit, onUpdated, onDeleted, dragHandl
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
+    setUploadError("");
     const formData = new FormData();
     formData.append("file", file);
-    const res = await fetch(`/api/steps/${step.id}/images`, { method: "POST", body: formData });
-    if (res.ok) {
-      const image = await res.json();
-      onUpdated({ ...step, images: [...step.images, image] });
+    try {
+      const res = await fetch(`/api/steps/${step.id}/images`, { method: "POST", body: formData });
+      const data = await res.json();
+      if (res.ok) {
+        onUpdated({ ...step, images: [...step.images, data] });
+      } else {
+        setUploadError(data.error ?? `Upload failed (${res.status})`);
+      }
+    } catch (err) {
+      setUploadError("Network error — please try again");
     }
     setUploading(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
@@ -245,6 +253,10 @@ export function StepItem({ step, index, canEdit, onUpdated, onDeleted, dragHandl
                   </>
                 )}
               </div>
+
+              {uploadError && (
+                <p className="text-xs mb-2" style={{ color: "#DC2626" }}>{uploadError}</p>
+              )}
 
               {step.images.length > 0 ? (
                 <div className="grid grid-cols-3 gap-2">
