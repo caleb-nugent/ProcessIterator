@@ -314,8 +314,19 @@ export default function ProcessPage({ params }: { params: Promise<{ id: string }
           )}
         </div>
 
+        {/* Sessions — select before timing */}
+        <SessionPanel
+          processId={process.id}
+          sessions={process.sessions}
+          steps={process.steps}
+          activeSessionId={activeSessionId}
+          onSessionCreated={handleSessionCreated}
+          onSessionDeleted={handleSessionDeleted}
+          onSetActive={setActiveSessionId}
+        />
+
         {/* Steps */}
-        <div className="space-y-3">
+        <div className="space-y-3 mt-6">
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-sm font-semibold uppercase tracking-wider" style={{ color: "var(--gray)" }}>
               Steps
@@ -332,6 +343,14 @@ export default function ProcessPage({ params }: { params: Promise<{ id: string }
             )}
           </div>
 
+          {/* Nudge to pick a session before timing */}
+          {!activeSessionId && process.sessions.length > 0 && (
+            <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm mb-1"
+              style={{ background: "var(--cream-dark)", color: "var(--gray)" }}>
+              <span>Select or start a session above to log time against steps.</span>
+            </div>
+          )}
+
           {process.steps.map((step, i) => (
             <StepItem
               key={step.id}
@@ -345,10 +364,7 @@ export default function ProcessPage({ params }: { params: Promise<{ id: string }
           ))}
 
           {process.steps.length === 0 && (
-            <div
-              className="text-center py-12 rounded-xl border-2 border-dashed"
-              style={{ borderColor: "var(--border)" }}
-            >
+            <div className="text-center py-12 rounded-xl border-2 border-dashed" style={{ borderColor: "var(--border)" }}>
               <p className="text-sm mb-3" style={{ color: "var(--gray)" }}>No steps yet. Add your first step to build this SOP.</p>
               {canEdit && (
                 <button
@@ -363,13 +379,9 @@ export default function ProcessPage({ params }: { params: Promise<{ id: string }
             </div>
           )}
 
-          {/* Inline add step form */}
           {showAddStep && canEdit && (
-            <form
-              onSubmit={addStep}
-              className="flex gap-2 p-4 rounded-lg border"
-              style={{ background: "white", borderColor: "var(--orange)" }}
-            >
+            <form onSubmit={addStep} className="flex gap-2 p-4 rounded-lg border"
+              style={{ background: "white", borderColor: "var(--orange)" }}>
               <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5"
                 style={{ background: "var(--orange)", color: "white" }}>
                 {process.steps.length + 1}
@@ -382,37 +394,17 @@ export default function ProcessPage({ params }: { params: Promise<{ id: string }
                 style={{ color: "var(--black)" }}
                 placeholder="Step title…"
               />
-              <button
-                type="submit"
-                disabled={addingStep || !newStepTitle.trim()}
+              <button type="submit" disabled={addingStep || !newStepTitle.trim()}
                 className="px-3 py-1 rounded text-xs font-semibold disabled:opacity-60"
-                style={{ background: "var(--black)", color: "white" }}
-              >
+                style={{ background: "var(--black)", color: "white" }}>
                 {addingStep ? "Adding…" : "Add"}
               </button>
-              <button
-                type="button"
-                onClick={() => { setShowAddStep(false); setNewStepTitle(""); }}
-                className="p-1 rounded"
-                style={{ color: "var(--gray)" }}
-              >
+              <button type="button" onClick={() => { setShowAddStep(false); setNewStepTitle(""); }}
+                className="p-1 rounded" style={{ color: "var(--gray)" }}>
                 <X size={14} />
               </button>
             </form>
           )}
-        </div>
-
-        {/* Sessions */}
-        <div className="mt-6">
-          <SessionPanel
-            processId={process.id}
-            sessions={process.sessions}
-            steps={process.steps}
-            activeSessionId={activeSessionId}
-            onSessionCreated={handleSessionCreated}
-            onSessionDeleted={handleSessionDeleted}
-            onSetActive={setActiveSessionId}
-          />
         </div>
       </div>
 
