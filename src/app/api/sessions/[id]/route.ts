@@ -19,6 +19,25 @@ async function canAccess(sessionId: string) {
   return isOwner || hasShare ? userId : null;
 }
 
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const userId = await canAccess(id);
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { notes, quantity } = await req.json();
+
+  const updated = await prisma.processSession.update({
+    where: { id },
+    data: {
+      ...(notes !== undefined && { notes: notes?.trim() || null }),
+      ...(quantity !== undefined && { quantity: Math.max(1, parseInt(quantity) || 1) }),
+    },
+    include: { stepRuns: true },
+  });
+
+  return NextResponse.json(updated);
+}
+
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const userId = await canAccess(id);

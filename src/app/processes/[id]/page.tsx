@@ -125,6 +125,10 @@ export default function ProcessPage({ params }: { params: Promise<{ id: string }
     setProcess((p) => p ? { ...p, sessions: [session, ...p.sessions] } : p);
   }
 
+  function handleSessionUpdated(session: ProcessSession) {
+    setProcess((p) => p ? { ...p, sessions: p.sessions.map((s) => s.id === session.id ? session : s) } : p);
+  }
+
   function handleSessionDeleted(sessionId: string) {
     setProcess((p) => p ? { ...p, sessions: p.sessions.filter((s) => s.id !== sessionId) } : p);
   }
@@ -321,6 +325,7 @@ export default function ProcessPage({ params }: { params: Promise<{ id: string }
           steps={process.steps}
           activeSessionId={activeSessionId}
           onSessionCreated={handleSessionCreated}
+          onSessionUpdated={handleSessionUpdated}
           onSessionDeleted={handleSessionDeleted}
           onSetActive={setActiveSessionId}
         />
