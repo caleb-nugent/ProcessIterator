@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Play, Trash2, ChevronDown, ChevronUp, Package } from "lucide-react";
+import { Plus, Check, Trash2, ChevronDown, ChevronUp, Package } from "lucide-react";
 import { ProcessSession, StepWithRuns } from "@/types";
 import { formatDuration } from "./StepTimer";
 
@@ -15,14 +15,19 @@ interface Props {
   onSetActive: (id: string | null) => void;
 }
 
-function getSessionTotalMs(session: ProcessSession): number {
+function getSessionTotalMs(session: ProcessSession, steps?: StepWithRuns[]): number {
+  // Use live step run data if available (more up to date than session.stepRuns)
+  if (steps) {
+    return steps.flatMap(s => s.runs)
+      .filter(r => r.sessionId === session.id && r.durationMs != null)
+      .reduce((a, r) => a + r.durationMs!, 0);
+  }
   return session.stepRuns.reduce((acc, r) => acc + (r.durationMs ?? 0), 0);
 }
 
-function getPerPieceMs(session: ProcessSession): number | null {
-  const total = getSessionTotalMs(session);
-  if (!total || !session.quantity) return null;
-  return Math.round(total / session.quantity);
+function getPerPieceMs(totalMs: number, quantity: number): number | null {
+  if (!totalMs || !quantity) return null;
+  return Math.round(totalMs / quantity);
 }
 
 export function SessionPanel({
@@ -50,6 +55,7 @@ export function SessionPanel({
       setShowNew(false);
       setQuantity("1");
       setNotes("");
+      setExpanded(false);
     }
     setCreating(false);
   }
@@ -69,78 +75,63 @@ export function SessionPanel({
     return acc;
   }, {});
 
+  const activeSession = sessions.find(s => s.id === activeSessionId);
+
   return (
-    <div className="rounded-xl border overflow-hidden" style={{ background: "white", borderColor: "var(--border)" }}>
+    <div className="rounded-xl border overflow-hidden" style={{ background: "white", borderColor: activeSession ? "var(--orange)" : "var(--border)" }}>
       {/* Header */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-between px-5 py-4"
-        style={{ background: "var(--cream)" }}
+        className="w-full flex items-center justify-between px-5 py-4 text-left"
+        style={{ background: activeSession ? "var(--cream)" : "var(--cream)" }}
       >
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           <Package size={15} style={{ color: "var(--orange)" }} />
-          <span className="font-semibold text-sm" style={{ color: "var(--black)" }}>Sessions</span>
-          {sessions.length > 0 && (
-            <span className="text-xs px-1.5 py-0.5 rounded font-medium"
-              style={{ background: "var(--orange)", color: "white" }}>
-              {sessions.length}
+          <span className="font-semibold text-sm" style={{ color: "var(--black)" }}>
+            {activeSession
+              ? `Session — ${activeSession.quantity} ${activeSession.quantity === 1 ? "piece" : "pieces"}`
+              : "Select a Session"}
+          </span>
+          {!activeSession && sessions.length > 0 && (
+            <span className="text-xs px-2 py-0.5 rounded font-medium"
+              style={{ background: "var(--cream-dark)", color: "var(--gray)" }}>
+              {sessions.length} available
             </span>
           )}
-          {activeSessionId && (
-            <span className="text-xs px-2 py-0.5 rounded font-medium animate-pulse"
-              style={{ background: "#DCFCE7", color: "#16A34A" }}>
+          {activeSession && (() => {
+            const totalMs = getSessionTotalMs(activeSession, steps);
+            const perPiece = getPerPieceMs(totalMs, activeSession.quantity);
+            return totalMs > 0 ? (
+              <span className="text-xs" style={{ color: "var(--gray)" }}>
+                {formatDuration(totalMs)} total
+                {perPiece && activeSession.quantity > 1 && ` · ${formatDuration(perPiece)}/piece`}
+              </span>
+            ) : null;
+          })()}
+        </div>
+        <div className="flex items-center gap-2">
+          {activeSession && (
+            <span className="text-xs px-2 py-0.5 rounded font-medium"
+              style={{ background: "var(--orange)", color: "white" }}>
               Active
             </span>
           )}
+          {expanded
+            ? <ChevronUp size={14} style={{ color: "var(--gray)" }} />
+            : <ChevronDown size={14} style={{ color: "var(--gray)" }} />}
         </div>
-        {expanded ? <ChevronUp size={14} style={{ color: "var(--gray)" }} /> : <ChevronDown size={14} style={{ color: "var(--gray)" }} />}
       </button>
 
       {expanded && (
         <div className="border-t" style={{ borderColor: "var(--border)" }}>
-          {/* Active session banner */}
-          {activeSessionId && (() => {
-            const active = sessions.find(s => s.id === activeSessionId);
-            if (!active) return null;
-            const totalMs = getSessionTotalMs(active);
-            // calculate cumulative from all step runs in this session
-            const allSessionRuns = steps.flatMap(s => s.runs.filter(r => r.sessionId === activeSessionId));
-            const cumulativeMs = allSessionRuns.reduce((a, r) => a + (r.durationMs ?? 0), 0);
-            return (
-              <div className="px-5 py-3 border-b flex items-center justify-between gap-3"
-                style={{ background: "#F0FDF4", borderColor: "#BBF7D0" }}>
-                <div>
-                  <p className="text-xs font-semibold" style={{ color: "#16A34A" }}>
-                    Active session — {active.quantity} {active.quantity === 1 ? "piece" : "pieces"}
-                  </p>
-                  {cumulativeMs > 0 && (
-                    <p className="text-xs mt-0.5" style={{ color: "#15803D" }}>
-                      Cumulative: <span className="font-bold">{formatDuration(cumulativeMs)}</span>
-                      {active.quantity > 1 && (
-                        <span> · Per piece: <span className="font-bold">{formatDuration(Math.round(cumulativeMs / active.quantity))}</span></span>
-                      )}
-                    </p>
-                  )}
-                </div>
-                <button
-                  onClick={() => onSetActive(null)}
-                  className="text-xs px-3 py-1.5 rounded font-semibold"
-                  style={{ background: "#16A34A", color: "white" }}
-                >
-                  End session
-                </button>
-              </div>
-            );
-          })()}
-
-          {/* Sessions grouped by quantity */}
+          {/* Session list grouped by quantity */}
           <div className="divide-y" style={{ borderColor: "var(--cream-dark)" }}>
             {Object.entries(byQuantity)
               .sort(([a], [b]) => Number(b) - Number(a))
               .map(([qty, group]) => {
-                const validPerPiece = group.map(getPerPieceMs).filter((v): v is number => v !== null);
-                const avgPerPiece = validPerPiece.length
-                  ? Math.round(validPerPiece.reduce((a, b) => a + b, 0) / validPerPiece.length)
+                const validTotals = group.map(s => getSessionTotalMs(s, steps)).filter(ms => ms > 0);
+                const avgPerPiece = validTotals.length > 1
+                  ? Math.round(validTotals.reduce((a, ms) => a + getPerPieceMs(ms, Number(qty))!, 0) / validTotals.length)
                   : null;
 
                 return (
@@ -150,66 +141,60 @@ export function SessionPanel({
                         {qty} {Number(qty) === 1 ? "piece" : "pieces"}
                         {group.length > 1 && ` · ${group.length} sessions`}
                       </p>
-                      {avgPerPiece !== null && group.length > 1 && (
+                      {avgPerPiece !== null && (
                         <span className="text-xs font-semibold px-2 py-0.5 rounded"
                           style={{ background: "var(--cream-dark)", color: "var(--black)" }}>
                           Avg: {formatDuration(avgPerPiece)}/piece
                         </span>
                       )}
                     </div>
+
                     <div className="space-y-1.5">
                       {group.map((session) => {
-                        const totalMs = getSessionTotalMs(session);
-                        const perPiece = getPerPieceMs(session);
+                        const totalMs = getSessionTotalMs(session, steps);
+                        const perPiece = getPerPieceMs(totalMs, session.quantity);
                         const isActive = session.id === activeSessionId;
-                        const runCount = session.stepRuns.length;
 
                         return (
                           <div
                             key={session.id}
-                            className="flex items-center justify-between px-3 py-2 rounded-lg"
+                            className="flex items-center justify-between px-3 py-2.5 rounded-lg cursor-pointer transition-colors"
                             style={{
-                              background: isActive ? "#F0FDF4" : "var(--cream)",
-                              border: isActive ? "1px solid #BBF7D0" : "1px solid transparent",
+                              background: isActive ? "#FFF7F5" : "var(--cream)",
+                              border: `1px solid ${isActive ? "var(--orange)" : "transparent"}`,
                             }}
+                            onClick={() => onSetActive(isActive ? null : session.id)}
                           >
                             <div className="flex items-center gap-3 min-w-0">
+                              {/* Selection indicator */}
+                              <div className="w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors"
+                                style={{
+                                  borderColor: isActive ? "var(--orange)" : "var(--border)",
+                                  background: isActive ? "var(--orange)" : "transparent",
+                                }}>
+                                {isActive && <Check size={9} color="white" strokeWidth={3} />}
+                              </div>
                               <div>
                                 <p className="text-xs font-medium" style={{ color: "var(--black)" }}>
                                   {new Date(session.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
                                 </p>
                                 <p className="text-xs" style={{ color: "var(--gray)" }}>
-                                  {runCount} step{runCount !== 1 ? "s" : ""} timed
-                                  {totalMs > 0 && <> · Total: <span className="font-medium">{formatDuration(totalMs)}</span></>}
-                                  {perPiece !== null && session.quantity > 1 && <> · <span className="font-medium">{formatDuration(perPiece)}/piece</span></>}
+                                  {totalMs > 0
+                                    ? <>Total: <span className="font-medium">{formatDuration(totalMs)}</span>
+                                        {perPiece !== null && session.quantity > 1 && <> · <span className="font-medium">{formatDuration(perPiece)}/piece</span></>}
+                                      </>
+                                    : "No time logged yet"}
                                 </p>
                                 {session.notes && <p className="text-xs italic mt-0.5" style={{ color: "var(--gray)" }}>{session.notes}</p>}
                               </div>
                             </div>
-                            <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                              {!isActive ? (
-                                <button
-                                  onClick={() => onSetActive(session.id)}
-                                  className="flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium"
-                                  style={{ background: "var(--black)", color: "white" }}
-                                >
-                                  <Play size={10} />
-                                  Resume
-                                </button>
-                              ) : (
-                                <span className="text-xs font-medium px-2 py-1 rounded"
-                                  style={{ background: "#DCFCE7", color: "#16A34A" }}>
-                                  Active
-                                </span>
-                              )}
-                              <button
-                                onClick={() => handleDelete(session.id)}
-                                className="p-1.5 rounded hover:bg-[var(--cream-dark)]"
-                                style={{ color: "var(--gray)" }}
-                              >
-                                <Trash2 size={12} />
-                              </button>
-                            </div>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleDelete(session.id); }}
+                              className="p-1.5 rounded hover:bg-[var(--cream-dark)] shrink-0 ml-2"
+                              style={{ color: "var(--gray)" }}
+                            >
+                              <Trash2 size={12} />
+                            </button>
                           </div>
                         );
                       })}
@@ -218,11 +203,10 @@ export function SessionPanel({
                 );
               })}
 
-            {sessions.length === 0 && (
-              <div className="px-5 py-6 text-center">
-                <p className="text-sm" style={{ color: "var(--gray)" }}>
-                  No sessions yet. Start one to begin tracking production runs.
-                </p>
+            {sessions.length === 0 && !showNew && (
+              <div className="px-5 py-5 text-center">
+                <p className="text-sm mb-1 font-medium" style={{ color: "var(--black)" }}>No sessions yet</p>
+                <p className="text-xs" style={{ color: "var(--gray)" }}>Create a session to start logging time against steps.</p>
               </div>
             )}
           </div>
@@ -232,7 +216,7 @@ export function SessionPanel({
             {showNew ? (
               <form onSubmit={handleCreate} className="space-y-3">
                 <div>
-                  <label className="block text-xs font-medium mb-1" style={{ color: "var(--black)" }}>
+                  <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--black)" }}>
                     How many pieces are you making?
                   </label>
                   <input
@@ -241,39 +225,33 @@ export function SessionPanel({
                     min="1"
                     value={quantity}
                     onChange={(e) => setQuantity(e.target.value)}
-                    className="w-full px-3 py-2 rounded border text-sm outline-none"
+                    className="w-full px-3 py-2.5 rounded border text-sm outline-none"
                     style={{ borderColor: "var(--border)", color: "var(--black)" }}
                     placeholder="e.g. 50"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium mb-1" style={{ color: "var(--black)" }}>
+                  <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--black)" }}>
                     Notes <span className="font-normal" style={{ color: "var(--gray)" }}>(optional)</span>
                   </label>
                   <input
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    className="w-full px-3 py-2 rounded border text-sm outline-none"
+                    className="w-full px-3 py-2.5 rounded border text-sm outline-none"
                     style={{ borderColor: "var(--border)", color: "var(--black)" }}
                     placeholder="e.g. First batch with new material"
                   />
                 </div>
                 <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowNew(false)}
-                    className="px-3 py-2 rounded border text-sm"
-                    style={{ borderColor: "var(--border)", color: "var(--gray)" }}
-                  >
+                  <button type="button" onClick={() => setShowNew(false)}
+                    className="px-4 py-2 rounded border text-sm"
+                    style={{ borderColor: "var(--border)", color: "var(--gray)" }}>
                     Cancel
                   </button>
-                  <button
-                    type="submit"
-                    disabled={creating}
+                  <button type="submit" disabled={creating}
                     className="flex-1 py-2 rounded text-sm font-semibold disabled:opacity-60"
-                    style={{ background: "var(--orange)", color: "white" }}
-                  >
-                    {creating ? "Starting…" : "Start session"}
+                    style={{ background: "var(--orange)", color: "white" }}>
+                    {creating ? "Creating…" : "Create session"}
                   </button>
                 </div>
               </form>

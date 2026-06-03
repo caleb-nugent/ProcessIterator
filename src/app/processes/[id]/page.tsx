@@ -325,87 +325,87 @@ export default function ProcessPage({ params }: { params: Promise<{ id: string }
           onSetActive={setActiveSessionId}
         />
 
-        {/* Steps */}
-        <div className="space-y-3 mt-6">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-sm font-semibold uppercase tracking-wider" style={{ color: "var(--gray)" }}>
-              Steps
-            </h2>
-            {canEdit && (
-              <button
-                onClick={() => setShowAddStep(true)}
-                className="flex items-center gap-1 text-sm font-medium"
-                style={{ color: "var(--orange)" }}
-              >
-                <Plus size={14} />
-                Add step
-              </button>
-            )}
-          </div>
-
-          {/* Nudge to pick a session before timing */}
-          {!activeSessionId && process.sessions.length > 0 && (
-            <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm mb-1"
-              style={{ background: "var(--cream-dark)", color: "var(--gray)" }}>
-              <span>Select or start a session above to log time against steps.</span>
-            </div>
-          )}
-
-          {process.steps.map((step, i) => (
-            <StepItem
-              key={step.id}
-              step={step}
-              index={i}
-              canEdit={canEdit ?? false}
-              activeSessionId={activeSessionId}
-              onUpdated={handleStepUpdated}
-              onDeleted={handleStepDeleted}
-            />
-          ))}
-
-          {process.steps.length === 0 && (
-            <div className="text-center py-12 rounded-xl border-2 border-dashed" style={{ borderColor: "var(--border)" }}>
-              <p className="text-sm mb-3" style={{ color: "var(--gray)" }}>No steps yet. Add your first step to build this SOP.</p>
+        {/* Steps — only shown when a session is active */}
+        {activeSessionId ? (
+          <div className="space-y-3 mt-6">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-sm font-semibold uppercase tracking-wider" style={{ color: "var(--gray)" }}>
+                Steps
+              </h2>
               {canEdit && (
                 <button
                   onClick={() => setShowAddStep(true)}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded text-sm font-semibold mx-auto"
-                  style={{ background: "var(--orange)", color: "white" }}
+                  className="flex items-center gap-1 text-sm font-medium"
+                  style={{ color: "var(--orange)" }}
                 >
                   <Plus size={14} />
-                  Add first step
+                  Add step
                 </button>
               )}
             </div>
-          )}
 
-          {showAddStep && canEdit && (
-            <form onSubmit={addStep} className="flex gap-2 p-4 rounded-lg border"
-              style={{ background: "white", borderColor: "var(--orange)" }}>
-              <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5"
-                style={{ background: "var(--orange)", color: "white" }}>
-                {process.steps.length + 1}
-              </div>
-              <input
-                autoFocus
-                value={newStepTitle}
-                onChange={(e) => setNewStepTitle(e.target.value)}
-                className="flex-1 text-sm outline-none"
-                style={{ color: "var(--black)" }}
-                placeholder="Step title…"
+            {process.steps.map((step, i) => (
+              <StepItem
+                key={step.id}
+                step={step}
+                index={i}
+                canEdit={canEdit ?? false}
+                activeSessionId={activeSessionId}
+                onUpdated={handleStepUpdated}
+                onDeleted={handleStepDeleted}
               />
-              <button type="submit" disabled={addingStep || !newStepTitle.trim()}
-                className="px-3 py-1 rounded text-xs font-semibold disabled:opacity-60"
-                style={{ background: "var(--black)", color: "white" }}>
-                {addingStep ? "Adding…" : "Add"}
-              </button>
-              <button type="button" onClick={() => { setShowAddStep(false); setNewStepTitle(""); }}
-                className="p-1 rounded" style={{ color: "var(--gray)" }}>
-                <X size={14} />
-              </button>
-            </form>
-          )}
-        </div>
+            ))}
+
+            {process.steps.length === 0 && (
+              <div className="text-center py-12 rounded-xl border-2 border-dashed" style={{ borderColor: "var(--border)" }}>
+                <p className="text-sm mb-3" style={{ color: "var(--gray)" }}>No steps yet. Add your first step to build this SOP.</p>
+                {canEdit && (
+                  <button
+                    onClick={() => setShowAddStep(true)}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded text-sm font-semibold mx-auto"
+                    style={{ background: "var(--orange)", color: "white" }}
+                  >
+                    <Plus size={14} />
+                    Add first step
+                  </button>
+                )}
+              </div>
+            )}
+
+            {showAddStep && canEdit && (
+              <form onSubmit={addStep} className="flex gap-2 p-4 rounded-lg border"
+                style={{ background: "white", borderColor: "var(--orange)" }}>
+                <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5"
+                  style={{ background: "var(--orange)", color: "white" }}>
+                  {process.steps.length + 1}
+                </div>
+                <input
+                  autoFocus
+                  value={newStepTitle}
+                  onChange={(e) => setNewStepTitle(e.target.value)}
+                  className="flex-1 text-sm outline-none"
+                  style={{ color: "var(--black)" }}
+                  placeholder="Step title…"
+                />
+                <button type="submit" disabled={addingStep || !newStepTitle.trim()}
+                  className="px-3 py-1 rounded text-xs font-semibold disabled:opacity-60"
+                  style={{ background: "var(--black)", color: "white" }}>
+                  {addingStep ? "Adding…" : "Add"}
+                </button>
+                <button type="button" onClick={() => { setShowAddStep(false); setNewStepTitle(""); }}
+                  className="p-1 rounded" style={{ color: "var(--gray)" }}>
+                  <X size={14} />
+                </button>
+              </form>
+            )}
+          </div>
+        ) : (
+          <div className="mt-6 text-center py-10 rounded-xl border-2 border-dashed"
+            style={{ borderColor: "var(--border)" }}>
+            <p className="font-medium mb-1 text-sm" style={{ color: "var(--black)" }}>No session selected</p>
+            <p className="text-sm" style={{ color: "var(--gray)" }}>Select or create a session above to view and log steps.</p>
+          </div>
+        )}
       </div>
 
       {showShare && (
