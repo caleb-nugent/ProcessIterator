@@ -123,13 +123,16 @@ export function StepTimer({ stepId, runs, activeSessionId, onRunAdded, onRunDele
     ? runs.filter((r) => r.sessionId === activeSessionId)
     : runs;
 
-  const avgMs =
-    visibleRuns.length > 0 && visibleRuns.some((r) => r.durationMs != null)
-      ? Math.round(
-          visibleRuns.filter((r) => r.durationMs != null).reduce((a, r) => a + r.durationMs!, 0) /
-            visibleRuns.filter((r) => r.durationMs != null).length
-        )
-      : null;
+  const runsWithDuration = visibleRuns.filter((r) => r.durationMs != null);
+
+  // In a session: show cumulative total. Outside session: show average.
+  const summaryMs = activeSessionId
+    ? runsWithDuration.length > 0
+      ? runsWithDuration.reduce((a, r) => a + r.durationMs!, 0)
+      : null
+    : runsWithDuration.length > 0
+    ? Math.round(runsWithDuration.reduce((a, r) => a + r.durationMs!, 0) / runsWithDuration.length)
+    : null;
 
   return (
     <div className="space-y-3">
@@ -163,9 +166,10 @@ export function StepTimer({ stepId, runs, activeSessionId, onRunAdded, onRunDele
           Log manually
         </button>
 
-        {avgMs !== null && !activeSessionId && (
+        {summaryMs !== null && (
           <span className="text-xs" style={{ color: "var(--gray)" }}>
-            Avg: <span className="font-semibold" style={{ color: "var(--black)" }}>{formatDuration(avgMs)}</span>
+            {activeSessionId ? "Total" : "Avg"}:{" "}
+            <span className="font-semibold" style={{ color: "var(--black)" }}>{formatDuration(summaryMs)}</span>
           </span>
         )}
       </div>
