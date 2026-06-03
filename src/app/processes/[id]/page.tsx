@@ -15,9 +15,10 @@ import {
   Clock,
 } from "lucide-react";
 import Link from "next/link";
-import { ProcessDetail, StepWithRuns } from "@/types";
+import { ProcessDetail, ProcessSession, StepWithRuns } from "@/types";
 import { StepItem } from "@/components/process/StepItem";
 import { ShareModal } from "@/components/modals/ShareModal";
+import { SessionPanel } from "@/components/process/SessionPanel";
 
 export default function ProcessPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -31,6 +32,7 @@ export default function ProcessPage({ params }: { params: Promise<{ id: string }
   const [descInput, setDescInput] = useState("");
   const [editingDesc, setEditingDesc] = useState(false);
   const [showShare, setShowShare] = useState(false);
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [newStepTitle, setNewStepTitle] = useState("");
   const [addingStep, setAddingStep] = useState(false);
   const [showAddStep, setShowAddStep] = useState(false);
@@ -117,6 +119,14 @@ export default function ProcessPage({ params }: { params: Promise<{ id: string }
 
   function handleStepDeleted(stepId: string) {
     setProcess((p) => p ? { ...p, steps: p.steps.filter((s) => s.id !== stepId) } : p);
+  }
+
+  function handleSessionCreated(session: ProcessSession) {
+    setProcess((p) => p ? { ...p, sessions: [session, ...p.sessions] } : p);
+  }
+
+  function handleSessionDeleted(sessionId: string) {
+    setProcess((p) => p ? { ...p, sessions: p.sessions.filter((s) => s.id !== sessionId) } : p);
   }
 
   const totalRuns = process?.steps.reduce((acc, s) => acc + s.runs.length, 0) ?? 0;
@@ -328,6 +338,7 @@ export default function ProcessPage({ params }: { params: Promise<{ id: string }
               step={step}
               index={i}
               canEdit={canEdit ?? false}
+              activeSessionId={activeSessionId}
               onUpdated={handleStepUpdated}
               onDeleted={handleStepDeleted}
             />
@@ -389,6 +400,19 @@ export default function ProcessPage({ params }: { params: Promise<{ id: string }
               </button>
             </form>
           )}
+        </div>
+
+        {/* Sessions */}
+        <div className="mt-6">
+          <SessionPanel
+            processId={process.id}
+            sessions={process.sessions}
+            steps={process.steps}
+            activeSessionId={activeSessionId}
+            onSessionCreated={handleSessionCreated}
+            onSessionDeleted={handleSessionDeleted}
+            onSetActive={setActiveSessionId}
+          />
         </div>
       </div>
 

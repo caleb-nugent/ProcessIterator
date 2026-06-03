@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { Play, Square, Clock, Check } from "lucide-react";
 import { StepRun } from "@/types";
 
-function formatDuration(ms: number): string {
+export function formatDuration(ms: number): string {
   if (ms < 60000) return `${Math.round(ms / 1000)}s`;
   if (ms < 3600000) {
     const m = Math.floor(ms / 60000);
@@ -43,11 +43,12 @@ function parseDurationInput(input: string): number | null {
 interface Props {
   stepId: string;
   runs: StepRun[];
+  activeSessionId?: string | null;
   onRunAdded: (run: StepRun) => void;
   onRunDeleted: (runId: string) => void;
 }
 
-export function StepTimer({ stepId, runs, onRunAdded, onRunDeleted }: Props) {
+export function StepTimer({ stepId, runs, activeSessionId, onRunAdded, onRunDeleted }: Props) {
   const [running, setRunning] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [startedAt, setStartedAt] = useState<number | null>(null);
@@ -69,17 +70,15 @@ export function StepTimer({ stepId, runs, onRunAdded, onRunDeleted }: Props) {
   }, [running, startedAt]);
 
   function startTimer() {
-    const now = Date.now();
-    setStartedAt(now);
+    setStartedAt(Date.now());
     setElapsed(0);
     setRunning(true);
   }
 
   async function stopTimer() {
     setRunning(false);
-    const duration = elapsed;
+    await saveRun(elapsed);
     setElapsed(0);
-    await saveRun(duration);
   }
 
   async function saveManual(e: React.FormEvent) {
@@ -96,7 +95,11 @@ export function StepTimer({ stepId, runs, onRunAdded, onRunDeleted }: Props) {
     const res = await fetch(`/api/steps/${stepId}/runs`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ durationMs, notes: notes.trim() || null }),
+      body: JSON.stringify({
+        durationMs,
+        notes: notes.trim() || null,
+        sessionId: activeSessionId ?? null,
+      }),
     });
     if (res.ok) {
       const run = await res.json();
@@ -115,17 +118,21 @@ export function StepTimer({ stepId, runs, onRunAdded, onRunDeleted }: Props) {
     onRunDeleted(runId);
   }
 
+  // Only show runs for the active session (or all if no session active)
+  const visibleRuns = activeSessionId
+    ? runs.filter((r) => r.sessionId === activeSessionId)
+    : runs;
+
   const avgMs =
-    runs.length > 0 && runs.some((r) => r.durationMs != null)
+    visibleRuns.length > 0 && visibleRuns.some((r) => r.durationMs != null)
       ? Math.round(
-          runs.filter((r) => r.durationMs != null).reduce((a, r) => a + r.durationMs!, 0) /
-            runs.filter((r) => r.durationMs != null).length
+          visibleRuns.filter((r) => r.durationMs != null).reduce((a, r) => a + r.durationMs!, 0) /
+            visibleRuns.filter((r) => r.durationMs != null).length
         )
       : null;
 
   return (
     <div className="space-y-3">
-      {/* Timer controls */}
       <div className="flex items-center gap-2 flex-wrap">
         {!running ? (
           <button
@@ -156,27 +163,23 @@ export function StepTimer({ stepId, runs, onRunAdded, onRunDeleted }: Props) {
           Log manually
         </button>
 
-        {avgMs !== null && (
+        {avgMs !== null && !activeSessionId && (
           <span className="text-xs" style={{ color: "var(--gray)" }}>
             Avg: <span className="font-semibold" style={{ color: "var(--black)" }}>{formatDuration(avgMs)}</span>
           </span>
         )}
       </div>
 
-      {/* Live timer note */}
       {running && (
-        <div>
-          <input
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            className="w-full px-3 py-1.5 rounded border text-xs outline-none"
-            style={{ borderColor: "var(--border)", color: "var(--black)" }}
-            placeholder="Notes for this run (optional)"
-          />
-        </div>
+        <input
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          className="w-full px-3 py-1.5 rounded border text-xs outline-none"
+          style={{ borderColor: "var(--border)", color: "var(--black)" }}
+          placeholder="Notes for this run (optional)"
+        />
       )}
 
-      {/* Manual entry */}
       {showManual && !running && (
         <form onSubmit={saveManual} className="flex gap-2 items-start">
           <div className="flex-1 space-y-2">
@@ -206,10 +209,9 @@ export function StepTimer({ stepId, runs, onRunAdded, onRunDeleted }: Props) {
         </form>
       )}
 
-      {/* Run history */}
-      {runs.length > 0 && (
+      {visibleRuns.length > 0 && (
         <div className="space-y-1">
-          {runs.map((run) => (
+          {visibleRuns.map((run) => (
             <div
               key={run.id}
               className="flex items-center justify-between px-2.5 py-1.5 rounded text-xs"

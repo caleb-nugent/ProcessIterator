@@ -37,6 +37,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       shares: {
         include: { user: { select: { id: true, name: true, email: true } } },
       },
+      sessions: {
+        orderBy: { createdAt: "desc" },
+        include: { stepRuns: true },
+      },
     },
   });
 

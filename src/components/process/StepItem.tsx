@@ -12,12 +12,13 @@ interface Props {
   step: StepWithRuns;
   index: number;
   canEdit: boolean;
+  activeSessionId?: string | null;
   onUpdated: (step: StepWithRuns) => void;
   onDeleted: (stepId: string) => void;
   dragHandleProps?: React.HTMLAttributes<HTMLDivElement>;
 }
 
-export function StepItem({ step, index, canEdit, onUpdated, onDeleted, dragHandleProps }: Props) {
+export function StepItem({ step, index, canEdit, activeSessionId, onUpdated, onDeleted, dragHandleProps }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(step.title);
@@ -294,6 +295,7 @@ export function StepItem({ step, index, canEdit, onUpdated, onDeleted, dragHandl
               <StepTimer
                 stepId={step.id}
                 runs={step.runs}
+                activeSessionId={activeSessionId}
                 onRunAdded={handleRunAdded}
                 onRunDeleted={handleRunDeleted}
               />

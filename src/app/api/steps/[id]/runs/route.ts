@@ -26,11 +26,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const userId = await canAccess(stepId);
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { durationMs, notes, completedAt } = await req.json();
+  const { durationMs, notes, completedAt, sessionId } = await req.json();
 
   const run = await prisma.stepRun.create({
     data: {
       stepId,
+      sessionId: sessionId ?? null,
       durationMs: durationMs ?? null,
       notes: notes ?? null,
       completedAt: completedAt ? new Date(completedAt) : new Date(),

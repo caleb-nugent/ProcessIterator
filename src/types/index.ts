@@ -43,9 +43,20 @@ export interface StepWithRuns {
   images: StepImage[];
 }
 
+export interface ProcessSession {
+  id: string;
+  processId: string;
+  quantity: number;
+  notes: string | null;
+  completedAt: string;
+  createdAt: string;
+  stepRuns: StepRun[];
+}
+
 export interface StepRun {
   id: string;
   stepId: string;
+  sessionId: string | null;
   durationMs: number | null;
   notes: string | null;
   completedAt: string;
@@ -61,6 +72,7 @@ export interface ProcessDetail {
   createdAt: string;
   updatedAt: string;
   steps: StepWithRuns[];
+  sessions: ProcessSession[];
   folder?: { id: string; name: string; color: string } | null;
   shares: {
     id: string;
