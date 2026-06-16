@@ -3,10 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
 import {
   Folder, FolderOpen, Plus, ChevronRight, ChevronDown,
-  LogOut, LayoutDashboard, Layers, Menu, X,
+  LayoutDashboard, Layers, Menu, X,
 } from "lucide-react";
 import { FolderWithCounts } from "@/types";
 import { NewFolderModal } from "../modals/NewFolderModal";
@@ -136,16 +135,6 @@ function SidebarContent({
         )}
       </nav>
 
-      <div className="p-3 border-t" style={{ borderColor: "var(--border)" }}>
-        <button
-          onClick={() => signOut({ callbackUrl: "/login" })}
-          className="flex items-center gap-2 w-full px-3 py-2 rounded text-sm transition-colors"
-          style={{ color: "var(--gray)" }}
-        >
-          <LogOut size={14} />
-          Sign out
-        </button>
-      </div>
     </div>
   );
 }

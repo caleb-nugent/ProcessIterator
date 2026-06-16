@@ -1,27 +1,8 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-
-async function authorizeProcess(processId: string) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) return null;
-  const userId = (session.user as { id: string }).id;
-
-  const process = await prisma.process.findFirst({
-    where: {
-      id: processId,
-      OR: [{ userId }, { shares: { some: { userId } } }],
-    },
-  });
-
-  return process ? { userId, isOwner: process.userId === userId } : null;
-}
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const auth = await authorizeProcess(id);
-  if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const process = await prisma.process.findUnique({
     where: { id },
@@ -44,15 +25,14 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     },
   });
 
+  if (!process) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json(process);
 }
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const auth = await authorizeProcess(id);
-  if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
   const { title, description, folderId, isArchived } = await req.json();
+
   const process = await prisma.process.update({
     where: { id },
     data: {
@@ -72,9 +52,6 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const auth = await authorizeProcess(id);
-  if (!auth || !auth.isOwner) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
   await prisma.process.delete({ where: { id } });
   return NextResponse.json({ ok: true });
 }

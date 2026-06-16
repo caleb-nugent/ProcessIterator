@@ -1,12 +1,10 @@
 "use client";
 
 import { useState, useEffect, use } from "react";
-import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Plus,
-  Share2,
   Pencil,
   Check,
   X,
@@ -17,12 +15,10 @@ import {
 import Link from "next/link";
 import { ProcessDetail, ProcessSession, StepWithRuns } from "@/types";
 import { StepItem } from "@/components/process/StepItem";
-import { ShareModal } from "@/components/modals/ShareModal";
 import { SessionPanel } from "@/components/process/SessionPanel";
 
 export default function ProcessPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { data: session, status } = useSession();
   const router = useRouter();
 
   const [process, setProcess] = useState<ProcessDetail | null>(null);
@@ -31,18 +27,12 @@ export default function ProcessPage({ params }: { params: Promise<{ id: string }
   const [titleInput, setTitleInput] = useState("");
   const [descInput, setDescInput] = useState("");
   const [editingDesc, setEditingDesc] = useState(false);
-  const [showShare, setShowShare] = useState(false);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [newStepTitle, setNewStepTitle] = useState("");
   const [addingStep, setAddingStep] = useState(false);
   const [showAddStep, setShowAddStep] = useState(false);
 
   useEffect(() => {
-    if (status === "unauthenticated") router.push("/login");
-  }, [status, router]);
-
-  useEffect(() => {
-    if (status !== "authenticated") return;
     fetch(`/api/processes/${id}`)
       .then((r) => r.json())
       .then((data) => {
@@ -52,13 +42,9 @@ export default function ProcessPage({ params }: { params: Promise<{ id: string }
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [id, status]);
+  }, [id]);
 
-  const userId = (session?.user as { id?: string })?.id;
-  const isOwner = process?.userId === userId || !process;
-  const canEdit =
-    isOwner ||
-    process?.shares.some((s) => s.user.id === userId && s.permission === "edit");
+  const canEdit = true;
 
   async function saveTitle() {
     if (!titleInput.trim() || !process) return;
@@ -146,7 +132,7 @@ export default function ProcessPage({ params }: { params: Promise<{ id: string }
     return `${(ms / 3600000).toFixed(1)}h`;
   }
 
-  if (loading || status === "loading") {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--cream)" }}>
         <div className="w-6 h-6 border-2 rounded-full animate-spin" style={{ borderColor: "var(--orange)", borderTopColor: "transparent" }} />
@@ -180,25 +166,13 @@ export default function ProcessPage({ params }: { params: Promise<{ id: string }
           </Link>
 
           <div className="flex items-center gap-2">
-            {isOwner && (
-              <button
-                onClick={() => setShowShare(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded border text-sm font-medium transition-colors"
-                style={{ borderColor: "var(--border)", color: "var(--gray)" }}
-              >
-                <Share2 size={13} />
-                <span className="hidden sm:inline">Share</span>
-              </button>
-            )}
-            {isOwner && (
-              <button
-                onClick={deleteProcess}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded border text-sm font-medium transition-colors"
-                style={{ borderColor: "var(--border)", color: "var(--gray)" }}
-              >
-                <Trash2 size={13} />
-              </button>
-            )}
+            <button
+              onClick={deleteProcess}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded border text-sm font-medium transition-colors"
+              style={{ borderColor: "var(--border)", color: "var(--gray)" }}
+            >
+              <Trash2 size={13} />
+            </button>
           </div>
         </div>
       </div>
@@ -233,15 +207,13 @@ export default function ProcessPage({ params }: { params: Promise<{ id: string }
           ) : (
             <div className="flex items-start gap-2 group mb-2">
               <h1 className="text-xl md:text-2xl font-bold leading-tight" style={{ color: "var(--black)" }}>{process.title}</h1>
-              {canEdit && (
-                <button
-                  onClick={() => setEditingTitle(true)}
-                  className="mt-1 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                  style={{ color: "var(--gray)" }}
-                >
-                  <Pencil size={13} />
-                </button>
-              )}
+              <button
+                onClick={() => setEditingTitle(true)}
+                className="mt-1 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                style={{ color: "var(--gray)" }}
+              >
+                <Pencil size={13} />
+              </button>
             </div>
           )}
 
@@ -269,7 +241,7 @@ export default function ProcessPage({ params }: { params: Promise<{ id: string }
             <div className="flex items-start gap-2 group">
               {process.description ? (
                 <p className="text-sm" style={{ color: "var(--gray)" }}>{process.description}</p>
-              ) : canEdit ? (
+              ) : (
                 <button
                   onClick={() => setEditingDesc(true)}
                   className="text-sm opacity-0 group-hover:opacity-100 transition-opacity"
@@ -277,8 +249,8 @@ export default function ProcessPage({ params }: { params: Promise<{ id: string }
                 >
                   + Add description
                 </button>
-              ) : null}
-              {canEdit && process.description && (
+              )}
+              {process.description && (
                 <button
                   onClick={() => setEditingDesc(true)}
                   className="mt-0.5 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -337,16 +309,14 @@ export default function ProcessPage({ params }: { params: Promise<{ id: string }
               <h2 className="text-sm font-semibold uppercase tracking-wider" style={{ color: "var(--gray)" }}>
                 Steps
               </h2>
-              {canEdit && (
-                <button
-                  onClick={() => setShowAddStep(true)}
-                  className="flex items-center gap-1 text-sm font-medium"
-                  style={{ color: "var(--orange)" }}
-                >
-                  <Plus size={14} />
-                  Add step
-                </button>
-              )}
+              <button
+                onClick={() => setShowAddStep(true)}
+                className="flex items-center gap-1 text-sm font-medium"
+                style={{ color: "var(--orange)" }}
+              >
+                <Plus size={14} />
+                Add step
+              </button>
             </div>
 
             {process.steps.map((step, i) => (
@@ -354,7 +324,7 @@ export default function ProcessPage({ params }: { params: Promise<{ id: string }
                 key={step.id}
                 step={step}
                 index={i}
-                canEdit={canEdit ?? false}
+                canEdit={canEdit}
                 activeSessionId={activeSessionId}
                 onUpdated={handleStepUpdated}
                 onDeleted={handleStepDeleted}
@@ -364,20 +334,18 @@ export default function ProcessPage({ params }: { params: Promise<{ id: string }
             {process.steps.length === 0 && (
               <div className="text-center py-12 rounded-xl border-2 border-dashed" style={{ borderColor: "var(--border)" }}>
                 <p className="text-sm mb-3" style={{ color: "var(--gray)" }}>No steps yet. Add your first step to build this SOP.</p>
-                {canEdit && (
-                  <button
-                    onClick={() => setShowAddStep(true)}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded text-sm font-semibold mx-auto"
-                    style={{ background: "var(--orange)", color: "white" }}
-                  >
-                    <Plus size={14} />
-                    Add first step
-                  </button>
-                )}
+                <button
+                  onClick={() => setShowAddStep(true)}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded text-sm font-semibold mx-auto"
+                  style={{ background: "var(--orange)", color: "white" }}
+                >
+                  <Plus size={14} />
+                  Add first step
+                </button>
               </div>
             )}
 
-            {showAddStep && canEdit && (
+            {showAddStep && (
               <form onSubmit={addStep} className="flex gap-2 p-4 rounded-lg border"
                 style={{ background: "white", borderColor: "var(--orange)" }}>
                 <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5"
@@ -412,14 +380,6 @@ export default function ProcessPage({ params }: { params: Promise<{ id: string }
           </div>
         )}
       </div>
-
-      {showShare && (
-        <ShareModal
-          process={process}
-          onClose={() => setShowShare(false)}
-          onUpdated={setProcess}
-        />
-      )}
     </div>
   );
 }

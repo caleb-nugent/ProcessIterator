@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Plus, Search, Folder, Clock, ArrowRight } from "lucide-react";
+import { Plus, Search, Folder, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { NewProcessModal } from "@/components/modals/NewProcessModal";
@@ -18,29 +17,21 @@ export default function DashboardPage() {
 }
 
 function DashboardContent() {
-  const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
   const selectedFolderId = searchParams.get("folder");
 
   const [folders, setFolders] = useState<FolderWithCounts[]>([]);
   const [processes, setProcesses] = useState<ProcessWithCounts[]>([]);
-  const [sharedProcesses, setSharedProcesses] = useState<ProcessWithCounts[]>([]);
   const [loading, setLoading] = useState(true);
   const [showNewProcess, setShowNewProcess] = useState(false);
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    if (status === "unauthenticated") router.push("/login");
-  }, [status, router]);
-
-  useEffect(() => {
-    if (status !== "authenticated") return;
     fetch("/api/folders").then((r) => r.json()).then(setFolders);
-  }, [status]);
+  }, []);
 
   useEffect(() => {
-    if (status !== "authenticated") return;
     setLoading(true);
     const url = selectedFolderId
       ? `/api/processes?folderId=${selectedFolderId}`
@@ -49,29 +40,15 @@ function DashboardContent() {
       .then((r) => r.json())
       .then((data) => {
         setProcesses(data.own ?? []);
-        setSharedProcesses(data.shared ?? []);
         setLoading(false);
       });
-  }, [status, selectedFolderId]);
+  }, [selectedFolderId]);
 
   const filtered = processes.filter((p) =>
     p.title.toLowerCase().includes(search.toLowerCase())
   );
 
-  const filteredShared = sharedProcesses.filter((p) =>
-    p.title.toLowerCase().includes(search.toLowerCase())
-  );
-
   const currentFolder = folders.find((f) => f.id === selectedFolderId);
-  const totalProcesses = processes.length + sharedProcesses.length;
-
-  if (status === "loading") {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--cream)" }}>
-        <div className="w-6 h-6 border-2 rounded-full animate-spin" style={{ borderColor: "var(--orange)", borderTopColor: "transparent" }} />
-      </div>
-    );
-  }
 
   return (
     <div className="h-screen md:flex md:overflow-hidden" style={{ background: "var(--cream)" }}>
@@ -79,7 +56,7 @@ function DashboardContent() {
         folders={folders}
         onFolderCreated={(f) => setFolders((prev) => [...prev, f])}
         selectedFolderId={selectedFolderId}
-        totalProcesses={totalProcesses}
+        totalProcesses={processes.length}
       />
 
       <main className="flex-1 overflow-y-auto pt-14 md:pt-0">
@@ -91,7 +68,7 @@ function DashboardContent() {
                 {currentFolder ? currentFolder.name : selectedFolderId === "null" ? "Uncategorized" : "All Processes"}
               </h1>
               <p className="text-sm mt-0.5 hidden md:block" style={{ color: "var(--gray)" }}>
-                {session?.user?.name ? `Welcome back, ${session.user.name}` : "Build and iterate your SOPs"}
+                Build and iterate your SOPs
               </p>
             </div>
             <button
@@ -119,48 +96,29 @@ function DashboardContent() {
 
           {loading ? (
             <div className="text-center py-16" style={{ color: "var(--gray)" }}>Loading…</div>
+          ) : filtered.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+              {filtered.map((p) => (
+                <ProcessCard key={p.id} process={p} />
+              ))}
+            </div>
           ) : (
-            <>
-              {/* Own processes */}
-              {filtered.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 mb-8">
-                  {filtered.map((p) => (
-                    <ProcessCard key={p.id} process={p} />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-16 border-2 border-dashed rounded-xl mb-8"
-                  style={{ borderColor: "var(--border)" }}>
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4"
-                    style={{ background: "var(--cream-dark)" }}>
-                    <Plus size={24} style={{ color: "var(--orange)" }} />
-                  </div>
-                  <p className="font-semibold mb-1" style={{ color: "var(--black)" }}>No processes yet</p>
-                  <p className="text-sm mb-4" style={{ color: "var(--gray)" }}>Create your first SOP to get started</p>
-                  <button
-                    onClick={() => setShowNewProcess(true)}
-                    className="px-4 py-2 rounded text-sm font-semibold"
-                    style={{ background: "var(--orange)", color: "white" }}
-                  >
-                    Create process
-                  </button>
-                </div>
-              )}
-
-              {/* Shared processes */}
-              {filteredShared.length > 0 && !selectedFolderId && (
-                <div>
-                  <h2 className="text-sm font-semibold uppercase tracking-wider mb-4" style={{ color: "var(--gray)" }}>
-                    Shared with me
-                  </h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {filteredShared.map((p) => (
-                      <ProcessCard key={p.id} process={p} shared />
-                    ))}
-                  </div>
-                </div>
-              )}
-            </>
+            <div className="text-center py-16 border-2 border-dashed rounded-xl"
+              style={{ borderColor: "var(--border)" }}>
+              <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4"
+                style={{ background: "var(--cream-dark)" }}>
+                <Plus size={24} style={{ color: "var(--orange)" }} />
+              </div>
+              <p className="font-semibold mb-1" style={{ color: "var(--black)" }}>No processes yet</p>
+              <p className="text-sm mb-4" style={{ color: "var(--gray)" }}>Create your first SOP to get started</p>
+              <button
+                onClick={() => setShowNewProcess(true)}
+                className="px-4 py-2 rounded text-sm font-semibold"
+                style={{ background: "var(--orange)", color: "white" }}
+              >
+                Create process
+              </button>
+            </div>
           )}
         </div>
       </main>
@@ -181,7 +139,7 @@ function DashboardContent() {
   );
 }
 
-function ProcessCard({ process, shared }: { process: ProcessWithCounts; shared?: boolean }) {
+function ProcessCard({ process }: { process: ProcessWithCounts }) {
   return (
     <Link
       href={`/processes/${process.id}`}
@@ -209,25 +167,16 @@ function ProcessCard({ process, shared }: { process: ProcessWithCounts; shared?:
       )}
 
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <span className="flex items-center gap-1 text-xs" style={{ color: "var(--gray)" }}>
-            <span className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold"
-              style={{ background: "var(--orange)", color: "white" }}>
-              {process._count.steps}
-            </span>
-            step{process._count.steps !== 1 ? "s" : ""}
+        <span className="flex items-center gap-1 text-xs" style={{ color: "var(--gray)" }}>
+          <span className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold"
+            style={{ background: "var(--orange)", color: "white" }}>
+            {process._count.steps}
           </span>
-        </div>
-        <div className="flex items-center gap-2">
-          {shared && (
-            <span className="text-xs px-2 py-0.5 rounded" style={{ background: "var(--cream)", color: "var(--gray)" }}>
-              shared
-            </span>
-          )}
-          <span className="text-xs" style={{ color: "var(--gray)" }}>
-            {new Date(process.updatedAt).toLocaleDateString()}
-          </span>
-        </div>
+          step{process._count.steps !== 1 ? "s" : ""}
+        </span>
+        <span className="text-xs" style={{ color: "var(--gray)" }}>
+          {new Date(process.updatedAt).toLocaleDateString()}
+        </span>
       </div>
     </Link>
   );

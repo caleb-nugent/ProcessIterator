@@ -1,15 +1,9 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getDefaultUserId } from "@/lib/defaultUser";
 
 export async function GET() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const userId = (session.user as { id: string }).id;
-
   const folders = await prisma.folder.findMany({
-    where: { userId },
     include: {
       _count: { select: { processes: true } },
       children: {
@@ -23,10 +17,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const userId = (session.user as { id: string }).id;
-
+  const userId = await getDefaultUserId();
   const { name, color, parentId } = await req.json();
   if (!name) return NextResponse.json({ error: "Name required" }, { status: 400 });
 
