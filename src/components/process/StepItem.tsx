@@ -3,22 +3,23 @@
 import { useState, useRef } from "react";
 import {
   GripVertical, Pencil, Trash2, Check, X,
-  ImagePlus, Loader2, ZoomIn, ChevronDown,
+  ImagePlus, Loader2, ZoomIn, ChevronDown, Clock,
 } from "lucide-react";
 import { StepWithRuns, StepRun, StepImage } from "@/types";
-import { StepTimer } from "./StepTimer";
+import { StepTimer, formatDuration } from "./StepTimer";
 
 interface Props {
   step: StepWithRuns;
   index: number;
   canEdit: boolean;
   activeSessionId?: string | null;
+  cumulativeSessionMs?: number;
   onUpdated: (step: StepWithRuns) => void;
   onDeleted: (stepId: string) => void;
   dragHandleProps?: React.HTMLAttributes<HTMLDivElement>;
 }
 
-export function StepItem({ step, index, canEdit, activeSessionId, onUpdated, onDeleted, dragHandleProps }: Props) {
+export function StepItem({ step, index, canEdit, activeSessionId, cumulativeSessionMs, onUpdated, onDeleted, dragHandleProps }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(step.title);
@@ -137,6 +138,14 @@ export function StepItem({ step, index, canEdit, activeSessionId, onUpdated, onD
               </p>
             )}
           </div>
+
+          {cumulativeSessionMs != null && cumulativeSessionMs > 0 && (
+            <div className="shrink-0 flex items-center gap-1 px-2 py-0.5 rounded text-xs font-mono"
+              style={{ background: "var(--cream-dark)", color: "var(--gray)" }}>
+              <Clock size={10} />
+              {formatDuration(cumulativeSessionMs)}
+            </div>
+          )}
 
           <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
             {canEdit && !editing && (

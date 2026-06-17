@@ -319,17 +319,26 @@ export default function ProcessPage({ params }: { params: Promise<{ id: string }
               </button>
             </div>
 
-            {process.steps.map((step, i) => (
-              <StepItem
-                key={step.id}
-                step={step}
-                index={i}
-                canEdit={canEdit}
-                activeSessionId={activeSessionId}
-                onUpdated={handleStepUpdated}
-                onDeleted={handleStepDeleted}
-              />
-            ))}
+            {process.steps.map((step, i) => {
+              const cumulativeMs = process.steps.slice(0, i + 1).reduce((acc, s) => {
+                const ms = s.runs
+                  .filter(r => r.sessionId === activeSessionId && r.durationMs != null)
+                  .reduce((a, r) => a + r.durationMs!, 0);
+                return acc + ms;
+              }, 0);
+              return (
+                <StepItem
+                  key={step.id}
+                  step={step}
+                  index={i}
+                  canEdit={canEdit}
+                  activeSessionId={activeSessionId}
+                  cumulativeSessionMs={cumulativeMs}
+                  onUpdated={handleStepUpdated}
+                  onDeleted={handleStepDeleted}
+                />
+              );
+            })}
 
             {process.steps.length === 0 && (
               <div className="text-center py-12 rounded-xl border-2 border-dashed" style={{ borderColor: "var(--border)" }}>
