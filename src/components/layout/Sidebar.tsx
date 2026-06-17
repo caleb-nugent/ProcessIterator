@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Folder, FolderOpen, Plus, ChevronRight, ChevronDown,
-  LayoutDashboard, Layers, Menu, X,
+  LayoutDashboard, Layers, Menu, X, Heart,
 } from "lucide-react";
 import { FolderWithCounts } from "@/types";
 import { NewFolderModal } from "../modals/NewFolderModal";
@@ -117,6 +117,19 @@ function SidebarContent({
         >
           <Layers size={14} />
           <span>Uncategorized</span>
+        </Link>
+
+        <Link
+          href="/life"
+          onClick={onNavigate}
+          className="flex items-center gap-2.5 px-3 py-2 rounded text-sm transition-colors mb-3"
+          style={{
+            background: pathname === "/life" ? "var(--cream-dark)" : "transparent",
+            color: pathname === "/life" ? "var(--black)" : "var(--gray)",
+          }}
+        >
+          <Heart size={14} />
+          <span>Caleb&apos;s Life</span>
         </Link>
 
         <div className="flex items-center justify-between px-3 mb-2">

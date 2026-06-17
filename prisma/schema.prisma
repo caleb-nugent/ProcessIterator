@@ -16,11 +16,12 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  accounts   Account[]
-  sessions   Session[]
-  folders    Folder[]
-  processes  Process[]
-  sharedWith ProcessShare[] @relation("SharedWith")
+  accounts    Account[]
+  sessions    Session[]
+  folders     Folder[]
+  processes   Process[]
+  sharedWith  ProcessShare[] @relation("SharedWith")
+  lifeEntries LifeEntry[]
 }
 
 model Account {
@@ -137,6 +138,17 @@ model StepImage {
   createdAt DateTime @default(now())
 
   step Step @relation(fields: [stepId], references: [id], onDelete: Cascade)
+}
+
+model LifeEntry {
+  id        String    @id @default(cuid())
+  userId    String
+  label     String
+  startedAt DateTime
+  stoppedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model ProcessShare {
