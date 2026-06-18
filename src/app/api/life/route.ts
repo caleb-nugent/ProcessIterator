@@ -14,9 +14,14 @@ export async function GET() {
 
 export async function POST(req: Request) {
   const userId = await getDefaultUserId();
-  const { label } = await req.json();
+  const { label, startedAt, stoppedAt } = await req.json();
   const entry = await prisma.lifeEntry.create({
-    data: { userId, label, startedAt: new Date() },
+    data: {
+      userId,
+      label,
+      startedAt: startedAt ? new Date(startedAt) : new Date(),
+      stoppedAt: stoppedAt ? new Date(stoppedAt) : null,
+    },
   });
   return NextResponse.json(entry);
 }
