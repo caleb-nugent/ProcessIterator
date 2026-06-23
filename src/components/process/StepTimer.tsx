@@ -48,21 +48,28 @@ interface Props {
   onRunDeleted: (runId: string) => void;
 }
 
+const STORAGE_KEY = (id: string) => `timer_start_${id}`;
+
 export function StepTimer({ stepId, runs, activeSessionId, onRunAdded, onRunDeleted }: Props) {
-  const [running, setRunning] = useState(false);
+  const [startedAt, setStartedAt] = useState<number | null>(() => {
+    if (typeof window === "undefined") return null;
+    const stored = localStorage.getItem(STORAGE_KEY(stepId));
+    return stored ? parseInt(stored, 10) : null;
+  });
   const [elapsed, setElapsed] = useState(0);
-  const [startedAt, setStartedAt] = useState<number | null>(null);
   const [manualInput, setManualInput] = useState("");
   const [notes, setNotes] = useState("");
   const [showManual, setShowManual] = useState(false);
   const [saving, setSaving] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const running = startedAt !== null;
+
   useEffect(() => {
     if (running) {
-      intervalRef.current = setInterval(() => {
-        setElapsed(Date.now() - (startedAt ?? Date.now()));
-      }, 100);
+      const tick = () => setElapsed(Date.now() - startedAt!);
+      tick();
+      intervalRef.current = setInterval(tick, 100);
     } else {
       if (intervalRef.current) clearInterval(intervalRef.current);
     }
@@ -70,15 +77,17 @@ export function StepTimer({ stepId, runs, activeSessionId, onRunAdded, onRunDele
   }, [running, startedAt]);
 
   function startTimer() {
-    setStartedAt(Date.now());
-    setElapsed(0);
-    setRunning(true);
+    const now = Date.now();
+    localStorage.setItem(STORAGE_KEY(stepId), String(now));
+    setStartedAt(now);
   }
 
   async function stopTimer() {
-    setRunning(false);
-    await saveRun(elapsed);
+    const duration = startedAt ? Date.now() - startedAt : elapsed;
+    localStorage.removeItem(STORAGE_KEY(stepId));
+    setStartedAt(null);
     setElapsed(0);
+    await saveRun(duration);
   }
 
   async function saveManual(e: React.FormEvent) {
