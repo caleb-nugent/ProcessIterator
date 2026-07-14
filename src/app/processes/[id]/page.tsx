@@ -13,6 +13,20 @@ import {
   Clock,
 } from "lucide-react";
 import Link from "next/link";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
 import { ProcessDetail, ProcessSession, StepWithRuns } from "@/types";
 import { StepItem } from "@/components/process/StepItem";
 import { SessionPanel } from "@/components/process/SessionPanel";
@@ -32,6 +46,11 @@ export default function ProcessPage({ params }: { params: Promise<{ id: string }
   const [addingStep, setAddingStep] = useState(false);
   const [showAddStep, setShowAddStep] = useState(false);
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } })
+  );
+
   useEffect(() => {
     fetch(`/api/processes/${id}`)
       .then((r) => r.json())
@@ -45,6 +64,26 @@ export default function ProcessPage({ params }: { params: Promise<{ id: string }
   }, [id]);
 
   const canEdit = true;
+
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id || !process) return;
+
+    const oldIndex = process.steps.findIndex((s) => s.id === active.id);
+    const newIndex = process.steps.findIndex((s) => s.id === over.id);
+    const reordered = arrayMove(process.steps, oldIndex, newIndex).map((s, i) => ({
+      ...s,
+      order: i,
+    }));
+
+    setProcess((p) => p ? { ...p, steps: reordered } : p);
+
+    await fetch(`/api/processes/${process.id}/steps`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ steps: reordered.map((s) => ({ id: s.id, order: s.order })) }),
+    });
+  }
 
   async function saveTitle() {
     if (!titleInput.trim() || !process) return;
@@ -319,26 +358,30 @@ export default function ProcessPage({ params }: { params: Promise<{ id: string }
               </button>
             </div>
 
-            {process.steps.map((step, i) => {
-              const cumulativeMs = process.steps.slice(0, i + 1).reduce((acc, s) => {
-                const ms = s.runs
-                  .filter(r => r.sessionId === activeSessionId && r.durationMs != null)
-                  .reduce((a, r) => a + r.durationMs!, 0);
-                return acc + ms;
-              }, 0);
-              return (
-                <StepItem
-                  key={step.id}
-                  step={step}
-                  index={i}
-                  canEdit={canEdit}
-                  activeSessionId={activeSessionId}
-                  cumulativeSessionMs={cumulativeMs}
-                  onUpdated={handleStepUpdated}
-                  onDeleted={handleStepDeleted}
-                />
-              );
-            })}
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={process.steps.map((s) => s.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-3">
+                  {process.steps.map((step, i) => (
+                    <StepItem
+                      key={step.id}
+                      step={step}
+                      index={i}
+                      canEdit={canEdit}
+                      activeSessionId={activeSessionId}
+                      onUpdated={handleStepUpdated}
+                      onDeleted={handleStepDeleted}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
 
             {process.steps.length === 0 && (
               <div className="text-center py-12 rounded-xl border-2 border-dashed" style={{ borderColor: "var(--border)" }}>

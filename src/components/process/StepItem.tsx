@@ -5,6 +5,8 @@ import {
   GripVertical, Pencil, Trash2, Check, X,
   ImagePlus, Loader2, ZoomIn, ChevronDown, Clock,
 } from "lucide-react";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { StepWithRuns, StepRun, StepImage } from "@/types";
 import { StepTimer, formatDuration } from "./StepTimer";
 
@@ -16,10 +18,10 @@ interface Props {
   cumulativeSessionMs?: number;
   onUpdated: (step: StepWithRuns) => void;
   onDeleted: (stepId: string) => void;
-  dragHandleProps?: React.HTMLAttributes<HTMLDivElement>;
 }
 
-export function StepItem({ step, index, canEdit, activeSessionId, cumulativeSessionMs, onUpdated, onDeleted, dragHandleProps }: Props) {
+export function StepItem({ step, index, canEdit, activeSessionId, cumulativeSessionMs, onUpdated, onDeleted }: Props) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: step.id });
   const [expanded, setExpanded] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(step.title);
@@ -97,11 +99,16 @@ export function StepItem({ step, index, canEdit, activeSessionId, cumulativeSess
   return (
     <>
       <div
+        ref={setNodeRef}
         className="rounded-xl border overflow-hidden transition-shadow"
         style={{
           background: "white",
           borderColor: expanded ? "var(--orange)" : "var(--border)",
-          boxShadow: expanded ? "0 4px 24px rgba(232,67,26,0.08)" : "none",
+          boxShadow: isDragging ? "0 8px 32px rgba(0,0,0,0.12)" : expanded ? "0 4px 24px rgba(232,67,26,0.08)" : "none",
+          transform: CSS.Transform.toString(transform),
+          transition,
+          opacity: isDragging ? 0.85 : 1,
+          zIndex: isDragging ? 50 : undefined,
         }}
       >
         {/* Collapsed header — clicking anywhere opens it */}
@@ -112,8 +119,9 @@ export function StepItem({ step, index, canEdit, activeSessionId, cumulativeSess
         >
           {canEdit && (
             <div
-              {...dragHandleProps}
-              className="cursor-grab active:cursor-grabbing shrink-0"
+              {...attributes}
+              {...listeners}
+              className="cursor-grab active:cursor-grabbing shrink-0 touch-none"
               style={{ color: "var(--border)" }}
               onClick={(e) => e.stopPropagation()}
             >
